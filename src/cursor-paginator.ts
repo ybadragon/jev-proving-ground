@@ -36,7 +36,7 @@ export class SortedCursorPaginator<T> {
     const start = cursor === null ? 0 : this.decodeCursor(cursor);
     const end = Math.min(start + this.pageSize, this.sorted.length);
     const items = this.sorted.slice(start, end);
-    const nextCursor = end < this.sorted.length ? this.encodeCursor(end) : null;
+    const nextCursor = end < this.sorted.length ? this.encodeCursor(end - 1) : null;
     return { items, nextCursor };
   }
 
