@@ -2,7 +2,7 @@
   "name": "jev-proving-ground",
   "version": "1.0.0",
   "private": true,
-  "description": "Synthetic cases for measuring whether the verify-criteria check actually catches things.",
+  "description": "Small, self-contained TypeScript modules. Not real software.",
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",

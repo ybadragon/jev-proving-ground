@@ -1,6 +1,4 @@
-# Brian owns everything here. Agents open PRs against this repo autonomously,
-# so review is the gate that keeps a machine-authored change from landing
-# unseen — including changes written by an agent that was told to plant a
-# defect on purpose.
+# Brian owns everything here. Agents open pull requests against this repo
+# autonomously, so review is the gate that keeps a change from landing unseen.
 
 * @ybadragon
