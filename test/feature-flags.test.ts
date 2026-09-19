@@ -54,6 +54,16 @@ test('a globally disabled flag overrides a user override', () => {
   assert.equal(flags.isEnabled('flag', 'alice'), false);
 });
 
+test('a globally disabled flag reads as false even for a user overridden to true', () => {
+  const flags = new FeatureFlags();
+  flags.define('flag', false);
+  flags.setOverride('flag', 'alice', true);
+
+  flags.disableGlobally('flag');
+
+  assert.equal(flags.isEnabled('flag', 'alice'), false);
+});
+
 test('a globally disabled flag reads as false for users with no override', () => {
   const flags = new FeatureFlags();
   flags.define('flag', true);
