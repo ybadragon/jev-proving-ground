@@ -336,7 +336,7 @@ test('list reflects the current state of every job, not just queued ones', () =>
 
 test('a job claimed longer than the timeout is reaped back to queued', () => {
   const queue = new JobQueue({ claimTimeoutMs: 1000 });
-  const id = queue.submit('payload');
+  const id = queue.submit('payload', { retryLimit: 1 });
   queue.claim(NOW);
 
   const later = new Date(NOW.getTime() + 2000);
@@ -384,7 +384,7 @@ test('reaping never touches a queued, done, or failed job', () => {
 
 test('a reaped job can be claimed by a different worker', () => {
   const queue = new JobQueue({ claimTimeoutMs: 1000 });
-  const id = queue.submit('payload');
+  const id = queue.submit('payload', { retryLimit: 1 });
   queue.claim(NOW);
 
   const later = new Date(NOW.getTime() + 2000);
@@ -394,9 +394,9 @@ test('a reaped job can be claimed by a different worker', () => {
   assert.equal(claimedAgain?.id, id);
 });
 
-test('a job can be reaped and reclaimed repeatedly', () => {
+test('a job can be reaped and reclaimed repeatedly while retries remain', () => {
   const queue = new JobQueue({ claimTimeoutMs: 1000 });
-  const id = queue.submit('payload', { retryLimit: 0 });
+  const id = queue.submit('payload', { retryLimit: 5 });
 
   for (let i = 0; i < 5; i++) {
     queue.claim(NOW);
@@ -404,6 +404,26 @@ test('a job can be reaped and reclaimed repeatedly', () => {
   }
 
   assert.equal(queue.get(id)?.state, 'queued');
+  assert.equal(queue.get(id)?.failureCount, 5);
+});
+
+test('an abandoned job counts as one failure toward its retry limit', () => {
+  const queue = new JobQueue({ claimTimeoutMs: 1000 });
+  const id = queue.submit('payload', { retryLimit: 1 });
+
+  queue.claim(NOW);
+  queue.reapAbandoned(new Date(NOW.getTime() + 2000));
+
+  let job = queue.get(id);
+  assert.equal(job?.state, 'queued');
+  assert.equal(job?.failureCount, 1);
+
+  queue.claim(new Date(NOW.getTime() + 2000));
+  queue.reapAbandoned(new Date(NOW.getTime() + 4000));
+
+  job = queue.get(id);
+  assert.equal(job?.state, 'failed');
+  assert.equal(job?.failureCount, 2);
 });
 
 test('with no timeout configured, reaping never abandons a running job', () => {

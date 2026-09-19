@@ -213,6 +213,10 @@ export class JobQueue<TPayload = unknown, TResult = unknown> {
    * Returns any `running` job to `queued` if it has been claimed for longer
    * than `claimTimeoutMs`, and returns the ids of the jobs it reaped.
    *
+   * Abandonment counts as a failure toward the job's retry limit, the same
+   * as an explicit `fail()` call, so a job that is repeatedly abandoned is
+   * eventually left `failed` instead of being reaped forever.
+   *
    * This is housekeeping the caller drives explicitly (for example, on a
    * timer) rather than something the queue does on its own.
    */
@@ -225,7 +229,9 @@ export class JobQueue<TPayload = unknown, TResult = unknown> {
       }
       const heldFor = now.getTime() - job.claimedAt.getTime();
       if (heldFor > this.claimTimeoutMs) {
-        job.state = 'queued';
+        const willRetry = job.failureCount < job.retryLimit;
+        job.failureCount += 1;
+        job.state = willRetry ? 'queued' : 'failed';
         job.claimedAt = null;
         reaped.push(job.id);
       }
