@@ -100,6 +100,19 @@ test('the result shape distinguishes eventual success from giving up', async () 
   assert.ok(!('error' in succeeded));
 });
 
+test('the delay before each retry matches the documented curve: base, 2x, 4x, 8x', async () => {
+  const delays: number[] = [];
+  await runWithRetry(failTimes(10), {
+    maxAttempts: 5,
+    baseDelayMs: 100,
+    maxDelayMs: 100_000,
+    random: () => 1,
+    sleep: instantSleep(delays),
+  });
+
+  assert.deepEqual(delays, [100, 200, 400, 800]);
+});
+
 test('the delay before each retry grows rather than staying constant', async () => {
   const delays: number[] = [];
   await runWithRetry(failTimes(10), {

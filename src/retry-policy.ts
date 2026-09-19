@@ -43,12 +43,12 @@ function defaultSleep(ms: number): Promise<void> {
 /**
  * The delay for a given retry attempt, before jitter is applied.
  *
- * `attempt` is the attempt that is about to run (the first retry is `2`),
+ * `nextAttempt` is the attempt that is about to run (the first retry is `2`),
  * so the first retry backs off by one multiple of `baseDelayMs` and each
  * subsequent retry doubles the previous one.
  */
-function uncappedDelayFor(attempt: number, baseDelayMs: number): number {
-  return baseDelayMs * 2 ** (attempt - 2);
+function uncappedDelayFor(nextAttempt: number, baseDelayMs: number): number {
+  return baseDelayMs * 2 ** (nextAttempt - 2);
 }
 
 /**
@@ -87,7 +87,7 @@ export async function runWithRetry<T>(
       }
 
       const nextAttempt = attempt + 1;
-      const cappedDelay = Math.min(uncappedDelayFor(attempt, baseDelayMs), maxDelayMs);
+      const cappedDelay = Math.min(uncappedDelayFor(nextAttempt, baseDelayMs), maxDelayMs);
       const delayMs = random() * cappedDelay;
 
       onRetry?.({ attempt: nextAttempt, error, delayMs });
