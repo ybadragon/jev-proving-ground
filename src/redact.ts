@@ -62,19 +62,13 @@ export function redactSecrets(text: string): string {
       return text;
     }
 
-    const seen = new Set<string>();
     let result = text;
 
     for (const { regex } of PATTERNS) {
       regex.lastIndex = 0;
-      result = result.replace(regex, (match: string, secretValue: string) => {
-        if (seen.has(secretValue)) {
-          return match;
-        }
-        seen.add(secretValue);
-
-        return match.replace(secretValue, maskValue(secretValue));
-      });
+      result = result.replace(regex, (match: string, secretValue: string) =>
+        match.replace(secretValue, maskValue(secretValue))
+      );
     }
 
     return result;

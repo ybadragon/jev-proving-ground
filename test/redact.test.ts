@@ -45,6 +45,18 @@ test("redacts multiple distinct secrets in the same blob", () => {
   assert.ok(!output.includes("another-secret-value"));
 });
 
+test("redacts every occurrence of the same secret value, not just the first", () => {
+  const input = [
+    "password=repeated-secret-value",
+    "backup password=repeated-secret-value",
+  ].join("\n");
+  const output = redactSecrets(input);
+
+  assert.ok(!output.includes("repeated-secret-value"));
+  const occurrences = output.match(/repe\*\*\*REDACTED\*\*\*/g) ?? [];
+  assert.equal(occurrences.length, 2);
+});
+
 test("returns text with nothing sensitive byte-identical", () => {
   const input = "User logged in successfully from 10.0.0.5 at 12:00pm.";
   const output = redactSecrets(input);
