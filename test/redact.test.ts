@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { redactSecrets } from "../src/redact";
+import { redactSecrets } from "../src/redact.js";
 
 test("redacts a password assignment but keeps the first four characters", () => {
   const input = "config: password=Sup3rSecretValue!";
