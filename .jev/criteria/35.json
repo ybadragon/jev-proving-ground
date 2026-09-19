@@ -1,0 +1,60 @@
+{
+  "source": {
+    "issue": "ybadragon/jev-proving-ground#35",
+    "pr": "ybadragon/jev-proving-ground#36",
+    "summary": "Add a has(key) method to LRUCache that checks presence without disturbing recency or the miss count."
+  },
+  "criteria": {
+    "has_reports_presence": {
+      "intent": "Add a has(key): boolean method to LRUCache. Returns true if the key is currently present, false otherwise.",
+      "provenance": "issue",
+      "files": ["src/lru-cache.ts"],
+      "question": {
+        "type": "noul",
+        "instructions": "Does LRUCache expose a method that returns whether a given key is currently present in the cache, as a boolean?",
+        "criteria": {
+          "true": "There is a method that reports presence/absence of a key as a boolean",
+          "false": "No such method exists, or membership can only be checked as a side effect of get()"
+        }
+      },
+      "foil": {
+        "type": "noul",
+        "instructions": "Is checking whether a key is present in the cache only possible by calling get() and checking whether the result is undefined?"
+      }
+    },
+    "has_does_not_refresh_recency": {
+      "intent": "Must not change the key's recency -- calling has() on a key must never protect it from being the next one evicted, and must never move another key ahead of it either.",
+      "provenance": "issue",
+      "files": ["src/lru-cache.ts"],
+      "question": {
+        "type": "noul",
+        "instructions": "Does the presence-check method leave the cache's recency ordering completely unchanged -- i.e. it never moves the checked key to the most-recently-used position?",
+        "criteria": {
+          "true": "The presence check reads without touching the recency-tracking structure at all",
+          "false": "The presence check calls or duplicates the same recency-refreshing logic get() uses"
+        }
+      },
+      "foil": {
+        "type": "noul",
+        "instructions": "Does the presence-check method call the same internal logic that get() uses to refresh a key's recency, so checking presence also protects that key from eviction?"
+      }
+    },
+    "has_does_not_count_a_miss": {
+      "intent": "Must not increment misses when the key is absent.",
+      "provenance": "issue",
+      "files": ["src/lru-cache.ts"],
+      "question": {
+        "type": "noul",
+        "instructions": "When the presence-check method is called for a key that is not present, does it leave the miss counter unchanged?",
+        "criteria": {
+          "true": "Checking presence for an absent key never increments the miss count",
+          "false": "Checking presence for an absent key increments the miss count, the same as a failed get()"
+        }
+      },
+      "foil": {
+        "type": "noul",
+        "instructions": "Does checking presence for an absent key increment the same miss counter that a failed get() increments?"
+      }
+    }
+  }
+}

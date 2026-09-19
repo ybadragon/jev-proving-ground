@@ -96,6 +96,44 @@ test("size reflects the number of entries currently stored", () => {
   assert.equal(cache.size, 2);
 });
 
+test("has returns true for a present key and false for an absent one", () => {
+  const cache = new LRUCache<string, number>(2);
+  cache.set("a", 1);
+
+  assert.equal(cache.has("a"), true);
+  assert.equal(cache.has("missing"), false);
+});
+
+test("has does not count as a miss for an absent key", () => {
+  const cache = new LRUCache<string, number>(2);
+
+  cache.has("missing");
+  cache.has("missing");
+
+  assert.equal(cache.misses, 0);
+});
+
+test("has does not refresh a key's recency the way get does", () => {
+  const cache = new LRUCache<string, number>(2);
+  cache.set("a", 1);
+  cache.set("b", 2);
+  cache.has("a"); // must NOT protect "a" from eviction
+  cache.set("c", 3); // "a" is still least recently used and should be evicted
+
+  assert.equal(cache.has("a"), false);
+  assert.equal(cache.get("b"), 2);
+  assert.equal(cache.get("c"), 3);
+});
+
+test("has on a key evicted after a has() check reflects the eviction", () => {
+  const cache = new LRUCache<string, number>(1);
+  cache.set("a", 1);
+  cache.set("b", 2); // evicts "a"
+
+  assert.equal(cache.has("a"), false);
+  assert.equal(cache.has("b"), true);
+});
+
 test("constructing with a negative or non-integer capacity throws", () => {
   assert.throws(() => new LRUCache<string, number>(-1), RangeError);
   assert.throws(() => new LRUCache<string, number>(1.5), RangeError);

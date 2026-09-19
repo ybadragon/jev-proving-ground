@@ -31,6 +31,16 @@ export class LRUCache<K, V> {
   }
 
   /**
+   * Returns whether `key` is currently present, without counting as a use:
+   * it never refreshes recency and never increments `misses`. `get()` is not
+   * a substitute for this check — calling it just to test membership would
+   * protect the key from the next eviction as a side effect.
+   */
+  has(key: K): boolean {
+    return this.entries.has(key);
+  }
+
+  /**
    * Returns the value stored for `key`, or `undefined` if it is not
    * present. A successful read counts as a use and refreshes the key's
    * recency; a failed read increments the miss count.
