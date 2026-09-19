@@ -42,15 +42,9 @@ export function parseQueryString(input: string): Record<string, string | string[
 
 /**
  * Decodes a single key or value: "+" becomes a space, then the rest is
- * percent-decoded. Falls back to the "+"-decoded (but not percent-decoded)
- * string if the percent-encoding itself is malformed, so a bad sequence
- * degrades instead of throwing.
+ * percent-decoded.
  */
 function decodeComponent(raw: string): string {
   const withSpaces = raw.replace(/\+/g, ' ');
-  try {
-    return decodeURIComponent(withSpaces);
-  } catch {
-    return withSpaces;
-  }
+  return decodeURIComponent(withSpaces);
 }
