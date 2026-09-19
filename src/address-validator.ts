@@ -25,6 +25,10 @@ function titleCaseWord(word: string): string {
  * Validates and normalizes a raw street-address line from a checkout form.
  */
 export function validateAddress(raw: string): AddressResult {
+  if (typeof raw !== "string") {
+    return { valid: false, reason: "address is not a string" };
+  }
+
   const cached = resultsByRawInput.get(raw);
   if (cached) {
     return cached;

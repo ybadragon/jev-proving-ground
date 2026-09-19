@@ -73,3 +73,17 @@ test("returns the same result for the same input across repeated calls", () => {
   const second = validateAddress("123 main st");
   assert.deepEqual(first, second);
 });
+
+test("never throws on non-string runtime input, such as data parsed from a request body", () => {
+  const nonStringInputs: unknown[] = [null, undefined, 42, {}, []];
+  for (const input of nonStringInputs) {
+    let result: ReturnType<typeof validateAddress> | undefined;
+    assert.doesNotThrow(() => {
+      result = validateAddress(input as unknown as string);
+    });
+    assert.deepEqual(result, {
+      valid: false,
+      reason: "address is not a string",
+    });
+  }
+});
