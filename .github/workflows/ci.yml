@@ -22,11 +22,17 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
-      - name: Lint
-        # No config in the repo, so this is a deliberately conservative pass:
-        # it catches unused variables, unreachable code and obvious mistakes
-        # without imposing a style nobody agreed to.
-        run: npx --yes eslint src test --no-eslintrc --env es2022,node --parser-options ecmaVersion:latest,sourceType:module --ext .ts --rule '{"no-unused-vars":"warn","no-unreachable":"error","no-constant-condition":"error","no-dupe-keys":"error"}' || echo "lint reported issues (non-blocking for now)"
+      # The lint step that used to sit here never linted anything. It called
+      # eslint with `--no-eslintrc`, a flag eslint 9 rejects outright, and the
+      # error was swallowed by a trailing `|| echo`, so the step went green
+      # having done nothing for its entire life. Pinning eslint 8 only moved
+      # the failure: with no TypeScript parser configured it could not read a
+      # single .ts file.
+      #
+      # What that step said it was for -- unused variables, unreachable code,
+      # obvious mistakes -- the compiler already does, so it is switched on in
+      # tsconfig.json and enforced by Typecheck above. That is a real gate
+      # rather than a green tick, and it needs no dependency.
 
       - name: Test
         run: npm test
