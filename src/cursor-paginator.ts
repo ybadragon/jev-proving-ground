@@ -9,6 +9,8 @@
  * the comparator.
  */
 
+import { randomUUID } from "node:crypto";
+
 export interface CursorPage<T> {
   readonly items: readonly T[];
   readonly nextCursor: string | null;
@@ -19,6 +21,15 @@ const CURSOR_MARKER = "scp1:";
 export class SortedCursorPaginator<T> {
   private readonly sorted: readonly T[];
   private readonly pageSize: number;
+  // Woven into every cursor this instance issues so a structurally valid
+  // cursor minted by a *different* paginator (even over the same data) is
+  // rejected instead of silently reused. This is an opacity/identity tag,
+  // not a tamper-proofing signature: anyone who can see one of our cursors
+  // can read this id out of the base64 payload and hand-craft another
+  // cursor that carries it, so it does not protect against a malicious
+  // caller forging a cursor. It only protects against a cursor from an
+  // unrelated collection being accepted by accident.
+  private readonly instanceId: string;
 
   constructor(items: readonly T[], compare: (a: T, b: T) => number, pageSize: number) {
     if (!Number.isInteger(pageSize) || pageSize <= 0) {
@@ -26,6 +37,7 @@ export class SortedCursorPaginator<T> {
     }
     this.sorted = [...items].sort(compare);
     this.pageSize = pageSize;
+    this.instanceId = randomUUID();
   }
 
   /**
@@ -36,12 +48,13 @@ export class SortedCursorPaginator<T> {
     const start = cursor === null ? 0 : this.decodeCursor(cursor);
     const end = Math.min(start + this.pageSize, this.sorted.length);
     const items = this.sorted.slice(start, end);
-    const nextCursor = end < this.sorted.length ? this.encodeCursor(end - 1) : null;
+    const nextCursor = end < this.sorted.length ? this.encodeCursor(end) : null;
     return { items, nextCursor };
   }
 
   private encodeCursor(nextIndex: number): string {
-    return CURSOR_MARKER + Buffer.from(String(nextIndex), "utf8").toString("base64");
+    const payload = `${this.instanceId}:${nextIndex}`;
+    return CURSOR_MARKER + Buffer.from(payload, "utf8").toString("base64");
   }
 
   private decodeCursor(cursor: string): number {
@@ -57,7 +70,17 @@ export class SortedCursorPaginator<T> {
       throw new Error("invalid cursor");
     }
 
-    const index = Number(decoded);
+    const separatorIndex = decoded.lastIndexOf(":");
+    if (separatorIndex === -1) {
+      throw new Error("invalid cursor");
+    }
+
+    const instanceId = decoded.slice(0, separatorIndex);
+    if (instanceId !== this.instanceId) {
+      throw new Error("invalid cursor");
+    }
+
+    const index = Number(decoded.slice(separatorIndex + 1));
     if (!Number.isInteger(index) || index < 0 || index > this.sorted.length) {
       throw new Error("invalid cursor");
     }

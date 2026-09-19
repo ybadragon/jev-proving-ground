@@ -122,3 +122,15 @@ test("presenting a cursor that did not come from this reader throws instead of r
   assert.throws(() => paginator.getPage(""));
   assert.throws(() => paginator.getPage(Buffer.from("garbage").toString("base64")));
 });
+
+test("a structurally valid cursor minted by a different paginator is rejected, not silently honored", () => {
+  const paginatorA = new SortedCursorPaginator(items([1, "a"], [2, "b"], [3, "c"], [4, "d"]), byKey, 2);
+  const paginatorB = new SortedCursorPaginator(items([10, "j"], [20, "k"], [30, "l"], [40, "m"]), byKey, 2);
+
+  const pageA1 = paginatorA.getPage();
+  assert.notEqual(pageA1.nextCursor, null, "paginator A has more items after its first page");
+
+  // The cursor is well-formed (right marker, valid base64, in-range index) —
+  // it's simply not this paginator's own cursor.
+  assert.throws(() => paginatorB.getPage(pageA1.nextCursor));
+});
