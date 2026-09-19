@@ -44,10 +44,10 @@ test('a user override takes precedence over the default, in both directions', ()
   assert.equal(flags.isEnabled('flag-off', 'carol'), false);
 });
 
-test('a globally disabled flag overrides a user override', () => {
+test('a globally disabled flag overrides a user override set to true', () => {
   const flags = new FeatureFlags();
-  flags.define('flag', true);
-  flags.setOverride('flag', 'alice', false);
+  flags.define('flag', false);
+  flags.setOverride('flag', 'alice', true);
 
   flags.disableGlobally('flag');
 
