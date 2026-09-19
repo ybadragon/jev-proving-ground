@@ -38,7 +38,7 @@ export class Leaderboard {
     const lowestIndex = this.findLowestIndex();
     const lowest = this.entries[lowestIndex];
 
-    if (score >= lowest.score) {
+    if (score > lowest.score) {
       this.entries[lowestIndex] = entry;
       return true;
     }

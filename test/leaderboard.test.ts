@@ -52,6 +52,18 @@ test('a score that is strictly lower than the lowest score is rejected', () => {
   assert.equal(board.submit('c', 5), false);
 });
 
+test('a score that ties the lowest score is rejected at capacity', () => {
+  const board = new Leaderboard(2);
+  board.submit('a', 10);
+  board.submit('b', 20);
+  assert.equal(board.submit('c', 10), false);
+  assert.equal(board.size(), 2);
+  assert.deepEqual(
+    board.top().map((e) => e.id),
+    ['b', 'a'],
+  );
+});
+
 test('a rejected submission leaves the board completely unchanged', () => {
   const board = new Leaderboard(2);
   board.submit('a', 10);
