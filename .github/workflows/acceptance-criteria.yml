@@ -44,6 +44,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ybadragon/claude-hub
+          # TODO: drop this once claude-hub PR "worktree-stale-verdict" (the
+          # jev-invalidate.mjs / re-run-on-push change) merges to master --
+          # pinned here only so this workflow can be tested end to end
+          # before that PR lands.
+          ref: worktree-stale-verdict
           # Cross-repo checkout of a private sibling repo needs its own
           # token -- GITHUB_TOKEN is scoped to this repo only. This PAT
           # should carry read-only, contents-only access to claude-hub and
