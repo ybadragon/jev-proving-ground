@@ -174,9 +174,7 @@ export class WebhookDispatcher {
       return record;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(`webhook delivery to ${subscriber.url} failed: ${message}`, {
-        secret: subscriber.secret,
-      });
+      console.error(`webhook delivery to ${subscriber.url} failed: ${message}`);
 
       const hasAttemptsLeft = attemptNumber < this.maxAttempts;
       const record: DeliveryRecord = {

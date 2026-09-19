@@ -92,6 +92,28 @@ test("a delivery the transport rejects is recorded as retrying when attempts rem
   assert.equal(record.lastError, "network error");
 });
 
+test("a failed delivery never logs the subscriber's signing secret", async (t) => {
+  const errorSpy = t.mock.method(console, "error", () => {});
+  const dispatcher = new WebhookDispatcher(alwaysFails("network error"), {
+    baseDelayMs: 100,
+    maxAttempts: 3,
+  });
+  const id = dispatcher.register("https://example.com/hook", "s3cret");
+
+  await dispatcher.send(id, { hello: "world" });
+
+  assert.ok(errorSpy.mock.calls.length > 0, "expected the failure to be logged");
+  for (const call of errorSpy.mock.calls) {
+    for (const arg of call.arguments) {
+      const serialized = typeof arg === "string" ? arg : JSON.stringify(arg);
+      assert.ok(
+        !serialized.includes("s3cret"),
+        `console.error call leaked the signing secret: ${serialized}`
+      );
+    }
+  }
+});
+
 test("a delivery is abandoned once max attempts is reached", async () => {
   const dispatcher = new WebhookDispatcher(alwaysFails(), { baseDelayMs: 50, maxAttempts: 2 });
   const id = dispatcher.register("https://example.com/hook", "s3cret");
