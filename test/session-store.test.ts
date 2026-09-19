@@ -86,6 +86,15 @@ test('refreshing an already-expired session does not resurrect it', () => {
   assert.equal(store.get(id, wellAfterExpiry), undefined);
 });
 
+test('refreshing at the exact instant a session expires does not resurrect it', () => {
+  const store = new SessionStore();
+  const id = store.create('user-1', 60_000, NOW);
+
+  const exactlyElapsed = new Date(NOW.getTime() + 60_000);
+  assert.equal(store.refresh(id, exactlyElapsed), false);
+  assert.equal(store.get(id, exactlyElapsed), undefined);
+});
+
 test('revoking a session makes it unavailable immediately, even before its TTL elapses', () => {
   const store = new SessionStore();
   const id = store.create('user-1', 60_000, NOW);
