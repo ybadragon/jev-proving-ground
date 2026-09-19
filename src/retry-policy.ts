@@ -87,7 +87,7 @@ export async function runWithRetry<T>(
       }
 
       const nextAttempt = attempt + 1;
-      const cappedDelay = Math.min(uncappedDelayFor(nextAttempt, baseDelayMs), maxDelayMs);
+      const cappedDelay = Math.min(uncappedDelayFor(attempt, baseDelayMs), maxDelayMs);
       const delayMs = random() * cappedDelay;
 
       onRetry?.({ attempt: nextAttempt, error, delayMs });
