@@ -9,3 +9,6 @@ deliberately **not in this repo** — a session writing criteria here must not b
 to read the answer, or it has been handed the test.
 
 Nothing here is real software. Do not depend on it.
+
+<!-- case-3 base: arm B -->
+
