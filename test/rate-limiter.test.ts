@@ -14,13 +14,18 @@ test('a caller is refused once its allowance is used up', () => {
   assert.equal(limiter.allow('caller', NOW), true);
   assert.equal(limiter.allow('caller', NOW), true);
   assert.equal(limiter.allow('caller', NOW), true);
+  assert.equal(limiter.allow('caller', NOW), false);
+});
+
+test('reaching the maximum exactly refuses the very next request', () => {
+  const limiter = new RateLimiter(2, 60_000);
+  assert.equal(limiter.allow('caller', NOW), true);
   assert.equal(limiter.allow('caller', NOW), true);
   assert.equal(limiter.allow('caller', NOW), false);
 });
 
 test('a caller stays refused for the rest of the window once refused', () => {
   const limiter = new RateLimiter(1, 60_000);
-  limiter.allow('caller', NOW);
   limiter.allow('caller', NOW);
   assert.equal(limiter.allow('caller', NOW), false);
 
@@ -31,7 +36,6 @@ test('a caller stays refused for the rest of the window once refused', () => {
 test('a caller is allowed again once the window has elapsed', () => {
   const limiter = new RateLimiter(1, 60_000);
   limiter.allow('caller', NOW);
-  limiter.allow('caller', NOW);
   assert.equal(limiter.allow('caller', NOW), false);
 
   const nextWindow = new Date(NOW.getTime() + 60_000);
@@ -41,21 +45,25 @@ test('a caller is allowed again once the window has elapsed', () => {
 test('each caller is tracked separately', () => {
   const limiter = new RateLimiter(1, 60_000);
   limiter.allow('exhausted', NOW);
-  limiter.allow('exhausted', NOW);
   assert.equal(limiter.allow('exhausted', NOW), false);
 
   assert.equal(limiter.allow('fresh', NOW), true);
 });
 
 test('one caller exhausting its allowance does not affect another caller', () => {
-  const limiter = new RateLimiter(1, 60_000);
-  limiter.allow('a', NOW);
-  limiter.allow('a', NOW);
+  const limiter = new RateLimiter(2, 60_000);
+  assert.equal(limiter.allow('a', NOW), true);
+  assert.equal(limiter.allow('a', NOW), true);
   assert.equal(limiter.allow('a', NOW), false);
 
   assert.equal(limiter.allow('b', NOW), true);
   assert.equal(limiter.allow('b', NOW), true);
   assert.equal(limiter.allow('b', NOW), false);
+});
+
+test('a maximum of zero refuses every request', () => {
+  const limiter = new RateLimiter(0, 60_000);
+  assert.equal(limiter.allow('caller', NOW), false);
 });
 
 test('rejects a negative maximum', () => {

@@ -40,7 +40,7 @@ export class RateLimiter {
       this.windows.set(callerId, window);
     }
 
-    if (window.count <= this.maxRequests) {
+    if (window.count < this.maxRequests) {
       window.count += 1;
       return true;
     }
