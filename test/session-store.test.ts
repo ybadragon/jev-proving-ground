@@ -13,6 +13,18 @@ test('creating a session returns an id that can look it up again', () => {
   assert.equal(session.userId, 'user-1');
 });
 
+test('creating a session with a non-positive ttlMs throws', () => {
+  const store = new SessionStore();
+  assert.throws(() => store.create('user-1', 0, NOW), RangeError);
+  assert.throws(() => store.create('user-1', -1, NOW), RangeError);
+});
+
+test('creating a session with a non-finite ttlMs throws', () => {
+  const store = new SessionStore();
+  assert.throws(() => store.create('user-1', NaN, NOW), RangeError);
+  assert.throws(() => store.create('user-1', Infinity, NOW), RangeError);
+});
+
 test('each created session gets its own unique id', () => {
   const store = new SessionStore();
   const first = store.create('user-1', 60_000, NOW);
