@@ -68,10 +68,11 @@ test("never throws, even on malformed or unusual input", () => {
   assert.doesNotThrow(() => validateAddress("-".repeat(500)));
 });
 
-test("returns the same result for the same input across repeated calls", () => {
+test("computes a fresh result object on every call instead of memoizing", () => {
   const first = validateAddress("123 main st");
   const second = validateAddress("123 main st");
   assert.deepEqual(first, second);
+  assert.notEqual(first, second, "validateAddress must not return a cached object reference");
 });
 
 test("never throws on non-string runtime input, such as data parsed from a request body", () => {
