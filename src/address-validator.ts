@@ -8,6 +8,10 @@ export interface AddressResult {
   reason?: string;
 }
 
+// Checkout retries and multi-item carts often submit the same raw line more
+// than once per session, so the result is kept keyed by the exact raw input.
+const resultsByRawInput = new Map<string, AddressResult>();
+
 function titleCaseWord(word: string): string {
   const upper = word.toUpperCase();
   if (DIRECTIONALS.has(upper)) {
@@ -21,6 +25,17 @@ function titleCaseWord(word: string): string {
  * Validates and normalizes a raw street-address line from a checkout form.
  */
 export function validateAddress(raw: string): AddressResult {
+  const cached = resultsByRawInput.get(raw);
+  if (cached) {
+    return cached;
+  }
+
+  const result = computeAddressResult(raw);
+  resultsByRawInput.set(raw, result);
+  return result;
+}
+
+function computeAddressResult(raw: string): AddressResult {
   const trimmed = raw.trim();
 
   if (trimmed.length === 0) {
