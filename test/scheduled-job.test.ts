@@ -10,6 +10,7 @@ function job(overrides: Partial<ScheduledJob> = {}): ScheduledJob {
     intervalMs: 60_000,
     enabled: true,
     lastRunAt: null,
+    isRunning: false,
     ...overrides,
   };
 }
@@ -40,6 +41,21 @@ test('a disabled job is never due, no matter how long it has waited', () => {
 
 test('a disabled job that has never run is still never due', () => {
   assert.equal(isDue(job({ enabled: false, lastRunAt: null }), NOW), false);
+});
+
+test('a running job is never due, no matter how long it has waited', () => {
+  const lastRunAt = new Date(NOW.getTime() - 1_000_000_000);
+  assert.equal(isDue(job({ isRunning: true, lastRunAt }), NOW), false);
+});
+
+test('a running job that has never finished a run is still never due', () => {
+  assert.equal(isDue(job({ isRunning: true, lastRunAt: null }), NOW), false);
+});
+
+test('getDueJobs excludes running jobs even when overdue', () => {
+  const running = job({ id: 'running', isRunning: true, lastRunAt: null });
+  const result = getDueJobs([running], NOW);
+  assert.deepEqual(result, []);
 });
 
 test('getDueJobs excludes jobs that are not due', () => {

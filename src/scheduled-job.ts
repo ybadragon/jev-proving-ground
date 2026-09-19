@@ -13,6 +13,8 @@ export interface ScheduledJob {
   readonly enabled: boolean;
   /** When the job last finished running, or `null` if it has never run. */
   readonly lastRunAt: Date | null;
+  /** Whether the job is currently running. A running job is never due. */
+  readonly isRunning: boolean;
 }
 
 /**
@@ -32,12 +34,14 @@ function waitTimeMs(job: ScheduledJob, now: Date): number {
  * Whether `job` should run right now.
  *
  * - A disabled job is never due.
+ * - A job that is currently running is never due, however overdue it is —
+ *   overlapping runs are not acceptable.
  * - A job that has never run is due immediately.
  * - Otherwise a job is due once at least `intervalMs` has passed since it
  *   last ran.
  */
 export function isDue(job: ScheduledJob, now: Date = new Date()): boolean {
-  if (!job.enabled) {
+  if (!job.enabled || job.isRunning) {
     return false;
   }
   return waitTimeMs(job, now) >= job.intervalMs;
