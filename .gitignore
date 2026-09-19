@@ -1,2 +1,7 @@
-node_modules
-dist
+node_modules/
+dist/
+
+# Agent worktrees — each session gets its own, never committed
+.claude/
+dist/
+node_modules/
