@@ -41,10 +41,20 @@ export function parseQueryString(input: string): Record<string, string | string[
 }
 
 /**
- * Decodes a single key or value: "+" becomes a space, then the rest is
- * percent-decoded.
+ * Decodes a single key or value: "+" becomes a space, then every run of
+ * percent-escapes is decoded. A run that isn't valid percent-encoding (a
+ * lone "%", a truncated escape, non-hex digits, or hex that isn't valid
+ * UTF-8) is left exactly as written rather than throwing, so a stray "%"
+ * elsewhere in the component doesn't stop unrelated valid escapes from
+ * decoding.
  */
 function decodeComponent(raw: string): string {
   const withSpaces = raw.replace(/\+/g, ' ');
-  return decodeURIComponent(withSpaces);
+  return withSpaces.replace(/(?:%[0-9A-Fa-f]{2})+/g, (run) => {
+    try {
+      return decodeURIComponent(run);
+    } catch {
+      return run;
+    }
+  });
 }
