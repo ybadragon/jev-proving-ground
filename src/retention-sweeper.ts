@@ -50,14 +50,14 @@ export class RetentionSweeper<T> {
   }
 
   /**
-   * Removes every entry added strictly before `cutoff` and returns the
-   * removed keys in the order they were originally added.
+   * Removes every unpinned entry added strictly before `cutoff` and returns
+   * the removed keys in the order they were originally added.
    */
   sweep(cutoff: number): string[] {
     const removed: string[] = [];
 
     for (const [key, entry] of this.entries) {
-      if (entry.addedAt < cutoff) {
+      if (!entry.pinned && entry.addedAt < cutoff) {
         removed.push(key);
       }
     }
