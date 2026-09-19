@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { getDueJobs, isDue, ScheduledJob } from '../src/scheduled-job';
+import { getDueJobs, isDue, ScheduledJob } from '../src/scheduled-job.js';
 
 const NOW = new Date('2024-01-01T12:00:00.000Z');
 
@@ -62,7 +62,7 @@ test('getDueJobs excludes jobs that are not due', () => {
   const notDue = job({ id: 'not-due', lastRunAt: NOW });
   const due = job({ id: 'due', lastRunAt: null });
   const result = getDueJobs([notDue, due], NOW);
-  assert.deepEqual(result.map((j) => j.id), ['due']);
+  assert.deepEqual(result.map((j: ScheduledJob) => j.id), ['due']);
 });
 
 test('getDueJobs excludes disabled jobs even when overdue', () => {
@@ -78,7 +78,7 @@ test('getDueJobs orders due jobs by longest waiting first', () => {
 
   const result = getDueJobs([waitedLeast, waitedMost, waitedMiddle], NOW);
 
-  assert.deepEqual(result.map((j) => j.id), ['waited-most', 'waited-middle', 'waited-least']);
+  assert.deepEqual(result.map((j: ScheduledJob) => j.id), ['waited-most', 'waited-middle', 'waited-least']);
 });
 
 test('a job that has never run outranks one that has, even if overdue', () => {
@@ -87,7 +87,7 @@ test('a job that has never run outranks one that has, even if overdue', () => {
 
   const result = getDueJobs([overdue, neverRun], NOW);
 
-  assert.deepEqual(result.map((j) => j.id), ['never-run', 'overdue']);
+  assert.deepEqual(result.map((j: ScheduledJob) => j.id), ['never-run', 'overdue']);
 });
 
 test('getDueJobs does not mutate the input array', () => {
