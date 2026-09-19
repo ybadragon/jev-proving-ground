@@ -1,0 +1,110 @@
+name: Acceptance criteria (re-run on push)
+
+# A commit status is attached to a SHA, not a PR: once a push moves the head,
+# the previous acceptance-criteria status silently vanishes from
+# statusCheckRollup, and the previous comment/review (which ARE attached to
+# the PR) survive verbatim, describing code that no longer exists. See
+# claude-hub's tools/jev/README.md ("jev-invalidate.mjs") for the measured
+# bug this exists to close (experiments/sdlc-loop/).
+#
+# This workflow never generates criteria. It only re-runs a set someone
+# already committed to `.jev/criteria/<issue>.json` via the verify-criteria
+# skill in claude-hub — regenerating them here, with the diff sitting right
+# in front of a CI job, would reopen the exact circularity the tool's
+# provenance rule exists to prevent. No committed file -> no check, and the
+# job says so explicitly rather than staying silent.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Two pushes in quick succession must not race two runs against the same
+# comment/review with no lock between find-and-PATCH -- keep only the latest.
+concurrency:
+  group: acceptance-criteria-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Check out this repo (for .jev/criteria)
+        uses: actions/checkout@v4
+
+      - name: Check out claude-hub (the tool; private, read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: ybadragon/claude-hub
+          # Tracks master. The branch this was pinned to while it was being
+          # built has since merged.
+          ref: master
+          # Cross-repo checkout of a private sibling repo needs its own
+          # token -- GITHUB_TOKEN is scoped to this repo only. This PAT
+          # should carry read-only, contents-only access to claude-hub and
+          # nothing else; it is a second secret this design costs beyond
+          # TYPESAFE_API_KEY, and is worth naming as such.
+          token: ${{ secrets.CLAUDE_HUB_PAT }}
+          path: .jev-tool
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve the linked issue and the criteria file it would use
+        id: resolve
+        run: |
+          issue=$(gh pr view "$PR" --repo "$REPO" --json closingIssuesReferences --jq '.closingIssuesReferences[0].number // empty')
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+          if [ -n "$issue" ] && [ -f ".jev/criteria/$issue.json" ]; then
+            echo "criteria=.jev/criteria/$issue.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "criteria=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mark any existing verdict stale, and say why re-checking will or won't follow
+        run: |
+          if [ -n "${{ steps.resolve.outputs.criteria }}" ]; then
+            node .jev-tool/tools/jev/jev-invalidate.mjs --pr "$PR" --repo "$REPO"
+          else
+            issue="${{ steps.resolve.outputs.issue }}"
+            if [ -n "$issue" ]; then
+              reason="No committed criteria file for issue #$issue (.jev/criteria/$issue.json) -- not checked against this commit."
+            else
+              reason="This PR has no linked issue this tool can resolve a criteria file from -- not checked against this commit."
+            fi
+            node .jev-tool/tools/jev/jev-invalidate.mjs --pr "$PR" --repo "$REPO" --reason "$reason"
+          fi
+
+      - name: Re-run the acceptance-criteria check
+        if: steps.resolve.outputs.criteria != ''
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+        run: |
+          set +e
+          node .jev-tool/tools/jev/jev-spec.mjs \
+            --criteria "${{ steps.resolve.outputs.criteria }}" \
+            --pr "$PR" --repo "$REPO" \
+            --comment --review --status
+          code=$?
+          set -e
+          # Exit 3 is jev-spec's normal "something not met or not
+          # demonstrated" outcome -- it already posted that verdict via
+          # --status, which is the channel meant to carry it (and the one a
+          # repo could later mark required in branch protection). Failing
+          # this job on top would make two overlapping signals disagree
+          # about what "red" means. Only a real failure (1) or bad usage
+          # (2) fails the job itself.
+          if [ "$code" != "0" ] && [ "$code" != "3" ]; then
+            echo "jev-spec exited $code -- treating as a real failure"
+            exit 1
+          fi
+          echo "jev-spec exited $code (expected outcome, verdict posted via --status)"
