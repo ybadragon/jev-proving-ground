@@ -83,9 +83,9 @@ export class FeatureFlags {
   }
 
   /**
-   * Resolves whether `flag` is enabled for `user`: an override wins if
-   * the user has one, the kill switch beats an unset flag's default, and
-   * an undefined flag is always `false`.
+   * Resolves whether `flag` is enabled for `user`: the kill switch beats
+   * everything else, then an override wins if the user has one, then the
+   * default applies, and an undefined flag is always `false`.
    */
   isEnabled(flag: string, user: string): boolean {
     const existing = this.flagsByName.get(flag);
@@ -93,12 +93,12 @@ export class FeatureFlags {
       return false;
     }
 
-    if (existing.overrides.has(user)) {
-      return existing.overrides.get(user)!;
-    }
-
     if (!existing.globallyEnabled) {
       return false;
+    }
+
+    if (existing.overrides.has(user)) {
+      return existing.overrides.get(user)!;
     }
 
     return existing.defaultEnabled;
