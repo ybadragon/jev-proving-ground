@@ -26,9 +26,7 @@ export class ActionHistory<T = unknown> {
    * it can no longer be brought back with `redo()`.
    */
   record(action: T): void {
-    if (this.future.length > 0) {
-      this.future.pop();
-    }
+    this.future.length = 0;
     this.past.push(action);
   }
 

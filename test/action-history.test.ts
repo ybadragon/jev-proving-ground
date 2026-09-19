@@ -99,6 +99,19 @@ test('recording a new action after an undo discards the redo history', () => {
   assert.equal(history.counts().redoable, 0);
 });
 
+test('recording after several undos discards all of the redo history, not just one entry', () => {
+  const history = new ActionHistory<string>();
+  history.record('a');
+  history.record('b');
+  history.record('c');
+  history.undo();
+  history.undo();
+  history.undo();
+  history.record('d');
+  assert.deepEqual(history.counts(), { undoable: 1, redoable: 0 });
+  assert.equal(history.redo(), undefined);
+});
+
 test('undoing then recording the same value again is a new entry, not a redo', () => {
   const history = new ActionHistory<string>();
   history.record('a');
