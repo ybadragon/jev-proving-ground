@@ -198,7 +198,7 @@ export class WebhookDispatcher {
     const history = this.historyBySubscriber.get(record.subscriberId);
     if (history === undefined) {
       this.historyBySubscriber.set(record.subscriberId, [record.id]);
-    } else if (history[history.length - 1] !== record.id) {
+    } else if (!history.includes(record.id)) {
       history.push(record.id);
     }
   }

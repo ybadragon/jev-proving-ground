@@ -233,6 +233,29 @@ test("a retried delivery keeps a single entry in the history, updated in place",
   assert.equal(history[0]?.status, "delivered");
 });
 
+test("interleaved deliveries to the same subscriber each keep a single history entry", async () => {
+  // First two sends both fail (attempt 1 for A, attempt 1 for B), then A's retry succeeds.
+  // At that point A's id is not the last entry pushed for the subscriber (B's is), so a
+  // dedupe check that only looks at the last array element misses the existing entry for A
+  // and appends a duplicate.
+  const dispatcher = new WebhookDispatcher(sequence("fail", "fail", "ok", "ok"), {
+    baseDelayMs: 100,
+    maxAttempts: 3,
+  });
+  const id = dispatcher.register("https://example.com/hook", "s3cret");
+
+  const a = await dispatcher.send(id, { seq: "A" });
+  const b = await dispatcher.send(id, { seq: "B" });
+  await dispatcher.retry(a.id);
+
+  const history = dispatcher.getHistory(id);
+
+  assert.deepEqual(
+    history.map((r) => r.id).sort(),
+    [a.id, b.id].sort()
+  );
+});
+
 test("getCounts reports how many deliveries are in each status across all subscribers", async () => {
   const dispatcher = new WebhookDispatcher(alwaysSucceeds(), { baseDelayMs: 100, maxAttempts: 3 });
   const a = dispatcher.register("https://a.example.com/hook", "secret-a");
