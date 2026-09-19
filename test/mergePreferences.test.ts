@@ -35,22 +35,22 @@ test("nested objects merge key by key instead of being replaced wholesale", () =
   });
 });
 
-test("an explicit null overrides the default value for that key", () => {
+test("an explicit null falls back to the default value for that key", () => {
   const defaults = { theme: "light" };
   const preferences = { theme: null };
 
   const result = mergePreferences(defaults, preferences);
 
-  assert.deepEqual(result, { theme: null });
+  assert.deepEqual(result, { theme: "light" });
 });
 
-test("an explicit null on a nested key overrides the nested default", () => {
+test("an explicit null on a nested key falls back to the nested default", () => {
   const defaults = { notifications: { email: true, sms: false } };
   const preferences = { notifications: { email: null } };
 
   const result = mergePreferences(defaults, preferences);
 
-  assert.deepEqual(result, { notifications: { email: null, sms: false } });
+  assert.deepEqual(result, { notifications: { email: true, sms: false } });
 });
 
 test("arrays are treated as plain values and are not merged element by element", () => {

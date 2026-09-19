@@ -12,7 +12,7 @@ function isPlainObject(value: unknown): value is PreferenceObject {
  * - Nested objects are merged key by key rather than replaced wholesale.
  * - A user preference explicitly set to `null` means "unset this" — it
  *   falls back to the default value for that key, just like a preference
- *   that was never set.
+ *   that was never set. This applies at any nesting depth.
  * - Arrays are treated as plain values; they are copied over as-is and
  *   are never merged key by key.
  * - `defaults` is never modified; a new object is returned.
@@ -26,7 +26,7 @@ export function mergePreferences(
   for (const key of Object.keys(preferences)) {
     const userValue = preferences[key];
 
-    if (userValue === undefined) {
+    if (userValue === undefined || userValue === null) {
       continue;
     }
 
