@@ -1,0 +1,15 @@
+{
+  "name": "jev-proving-ground",
+  "version": "1.0.0",
+  "description": "Synthetic cases for measuring whether the verify-criteria check actually catches things.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.json && node --test \"dist/test/*.test.js\""
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.9"
+  }
+}
