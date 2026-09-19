@@ -7,3 +7,6 @@ Answer keys of any kind are deliberately **not in this repo**. Anything a sessio
 could read here to shortcut its own judgement does not belong here.
 
 Nothing here is real software. Do not depend on it.
+
+<!-- case-3 base: arm B -->
+
