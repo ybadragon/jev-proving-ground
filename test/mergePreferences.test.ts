@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergePreferences } from "../src/mergePreferences.ts";
+import { mergePreferences } from "../src/mergePreferences.js";
 
 test("a preference the user has set wins over the default", () => {
   const defaults = { theme: "light", pageSize: 10 };
