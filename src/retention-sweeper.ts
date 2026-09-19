@@ -57,7 +57,7 @@ export class RetentionSweeper<T> {
     const removed: string[] = [];
 
     for (const [key, entry] of this.entries) {
-      if (entry.addedAt < cutoff) {
+      if (entry.addedAt < cutoff && !entry.pinned) {
         removed.push(key);
       }
     }

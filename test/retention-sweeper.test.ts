@@ -91,6 +91,18 @@ test("a pinned entry survives a sweep even when other entries are removed", () =
   assert.equal(sweeper.get("kept"), "fresh");
 });
 
+test("a pinned entry is not removed even when it is older than the cutoff", () => {
+  const sweeper = new RetentionSweeper<string>();
+  sweeper.add("old", "stale", 100);
+  sweeper.pin("old");
+
+  const removed = sweeper.sweep(300);
+
+  assert.deepEqual(removed, []);
+  assert.equal(sweeper.has("old"), true);
+  assert.equal(sweeper.get("old"), "stale");
+});
+
 test("an entry that is unpinned after having been pinned becomes eligible for sweeping again", () => {
   const sweeper = new RetentionSweeper<string>();
   sweeper.add("a", "value", 100);
