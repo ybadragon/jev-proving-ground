@@ -1,10 +1,8 @@
 name: CI
 
-# A real pipeline, because every earlier measurement in this repo called an
-# agent running `npm test` locally "CI" and then reasoned about what CI would
-# have caught. Typecheck and lint are here precisely because they are the
-# stages a local test run skips — if the acceptance-criteria check only ever
-# beats `node --test`, that is a much weaker claim than beating a build.
+# Typecheck and lint run alongside the tests because they are the stages a
+# local `npm test` skips, and a change that only passes the test runner is
+# not the same as a change that passes the build.
 
 on:
   pull_request:
