@@ -70,7 +70,7 @@ export class SessionStore {
    */
   refresh(sessionId: string, now: Date): boolean {
     const session = this.sessions.get(sessionId);
-    if (session === undefined || now.getTime() > session.expiresAt) {
+    if (session === undefined || this.isExpired(session, now)) {
       return false;
     }
 
