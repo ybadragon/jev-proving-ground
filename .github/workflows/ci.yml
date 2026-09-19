@@ -1,0 +1,34 @@
+name: CI
+
+# A real pipeline, because every earlier measurement in this repo called an
+# agent running `npm test` locally "CI" and then reasoned about what CI would
+# have caught. Typecheck and lint are here precisely because they are the
+# stages a local test run skips — if the acceptance-criteria check only ever
+# beats `node --test`, that is a much weaker claim than beating a build.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        # No config in the repo, so this is a deliberately conservative pass:
+        # it catches unused variables, unreachable code and obvious mistakes
+        # without imposing a style nobody agreed to.
+        run: npx --yes eslint src test --no-eslintrc --env es2022,node --parser-options ecmaVersion:latest,sourceType:module --ext .ts --rule '{"no-unused-vars":"warn","no-unreachable":"error","no-constant-condition":"error","no-dupe-keys":"error"}' || echo "lint reported issues (non-blocking for now)"
+
+      - name: Test
+        run: npm test
